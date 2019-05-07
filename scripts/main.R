@@ -28,7 +28,7 @@ if (!exists("energy_data") || is.null(energy_data)) {
   partial_data <- NULL #Memory cleaning
 }
 
-cat("Choose the granularity of the data by typing its number option: ")
+cat("Choose the granularity of the data by typing its number option: \n")
 cat(" (1) Days\n (2) Weeks\n (3) Months\n")
 user_input_granularity <- readline()
 user_input_granularity <- as.integer(user_input_granularity)
@@ -62,14 +62,16 @@ time_series_relative_variance <- apply(time_series_dec$time.series, 2, var) / va
 
 autoplot(time_series_dec) #Shows graphs of the time series and its components
 ggtsdisplay(time_series)  #Shows the time series and its ACF and PACF graphs
-cat("\nRelative variance of the time series components: ")
+cat("\nRelative variance of the time series components: \n")
 print(time_series_relative_variance)
 
 adf_test <- adf.test(time_series)
 cat("\nADF Test: \n")
 print(adf_test)
 
-cat("\nDo you want to make any transformation in the data?")
+cat("\n#####################################################\n")
+
+cat("\nDo you want to make any transformation in the data?\n")
 cat(" (1) YES\n (2) NO\n")
 user_input_do_transform <- readline()
 user_input_do_transform <- as.integer(user_input_do_transform)
@@ -88,7 +90,7 @@ time_series_split <- splitTrainTestTimeSeries(time_series,
                                               start_test = start_test, 
                                               end_test = end_test)
 
-cat("\nChoose the forecast algorithm: ")
+cat("\nChoose the forecast algorithm: \n")
 cat(" (1) ARIMA\n (2) Holt Winters\n")
 user_input_algorithm <- readline()
 user_input_algorithm <- as.integer(user_input_algorithm)
@@ -97,7 +99,7 @@ model <- NULL
 forecast <- NULL
 if (user_input_algorithm == 1) {
   #TODO Show ARIMA options
-  cat("\nSelect the type of ARIMA: ")
+  cat("\nSelect the type of ARIMA: \n")
   cat(" (1) Auto Arima\n (2) Non seasonal ARIMA\n (3) Seasonal ARIMA\n")
   user_input_arima_type <- readline()
   user_input_arima_type <- as.integer(user_input_arima_type)
@@ -128,9 +130,10 @@ model_accuracy <- accuracy(forecast, time_series_split$test)
 cat("\nModel accuracy: \n")
 print(model_accuracy)
 
+cat("\nCheck Residuals: \n")
 checkresiduals(forecast)
 
-autoplot(time_series) + autolayer(forecast$mean)
+print(autoplot(time_series) + autolayer(forecast$mean))
 
 
 
