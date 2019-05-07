@@ -79,4 +79,29 @@ avgEnergyForDayInMonths <- function(months) {
  aedm 
 }
 
+totalEnergyConsumByDay <- function(energyData) {
+  result <- energyData %>%
+    mutate(Year = year(Date), Day = day(Date)) %>%
+    group_by(Year, Month, Day) %>%
+    summarise(Total_energy_day = sum(Global_energy, na.rm = TRUE))
+  
+  result
+}
 
+totalEnergyConsumByWeek <- function(energyData) {
+  result <- energyData %>%
+    mutate(Year = year(Date), Week = week(Date)) %>%
+    group_by(Year, Week) %>%
+    summarise(Total_energy_week = sum(Global_energy, na.rm = TRUE))
+  
+  result
+}
+
+totalEnergyConsumByMonth <- function(energyData) {
+  result <- energyData %>%
+    mutate(Year = year(Date)) %>%
+    group_by(Year, Month) %>%
+    summarise(Total_energy_month = sum(Global_energy, na.rm = TRUE))
+  
+  result
+}

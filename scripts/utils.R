@@ -23,21 +23,38 @@ getSeason <- function(dates, north_hemisphere = TRUE) {
 
 featureEngineering <- function(energyData) {
   
+  energyData <- mutate(energyData, 
+                       Date_time = as.POSIXct(paste(Date, Time, sep = " "), 
+                                                format = "%Y-%m-%d %H:%M:%S", 
+                                              tz = "Europe/Paris"))
+  #Filling the missing minutes of the dataset
+  energyData <- pad(energyData, by = "Date_time", break_above = 2)
+  
   #Changing Date and Time to appropriate data type
   energyData <- mutate(energyData, 
-                       Date = chron(dates = Date, format = "y-m-d"), 
+                       Date = chron(dates = Date, format = "y-m-d"),
                        Time = chron(times = Time))
+  
+  #Filling the Date and Time NAs produced in pad function
+  na_date_index <- which(is.na(energyData$Date))
+  energyData$Date[na_date_index] <- chron(dates = 
+                                            strftime(energyData$Date_time[na_date_index], 
+                                                     format = "%Y-%m-%d"),
+                                          format = "y-m-d")
+  
+  na_time_index <- which(is.na(energyData$Time))
+  energyData$Time[na_time_index] <- chron(times = strftime(energyData$Date_time[na_time_index], 
+                                                           format = "%H:%M:%S"))
   
   #Storing the hours to make it easyer to split into period of the day in code below
   hours <- chron::hours(energyData$Time)
   
   energyData <- energyData %>% 
     
-    #Ordering by Date and time
-    arrange(Date, Time) %>% 
-    
     #New columns for Month, Week day and Season
-    mutate(Month = months(Date), Week_day = weekdays(Date), Season = as.factor(getSeason(Date))) %>%
+    mutate(Month = months(Date), 
+           Week_day = weekdays(Date), 
+           Season = as.factor(getSeason(Date))) %>%
     
     #Nem column for period of the day
     mutate(Period_of_day = ifelse(hours >= 0 & hours < 6, "Dawn", 
@@ -49,8 +66,38 @@ featureEngineering <- function(energyData) {
     
     #New column for energy consumption not measured by any sub-meterings (Wh)
     mutate(Reminder_energy = 
-             Global_active_power * 1000/60 - Sub_metering_1 - Sub_metering_2 - Sub_metering_3)
+             Global_active_power * 1000/60 - Sub_metering_1 - Sub_metering_2 - Sub_metering_3) %>%
     
+    #Ordering by Date and time
+    arrange(Date, Time)
   
   energyData
+}
+
+totalEnergyConsumTimeSeries <- function(energyData, granularity = "month", ...) {
+  time_series <- NULL
+  if (tolower(granularity) == "day") {
+    energyGrouped <- totalEnergyConsumByDay(energyData)
+    time_series <- ts(energyGrouped$Total_energy_day, frequency = 365, ...)
+  } else if (tolower(granularity) == "week") {
+    energyGrouped <- totalEnergyConsumByWeek(energyData)
+    time_series <- ts(energyGrouped$Total_energy_week, frequency = 52, ...)
+  } else if (tolower(granularity) == "month") {
+    energyGrouped <- totalEnergyConsumByMonth(energyData)
+    time_series <- ts(energyGrouped$Total_energy_month, frequency = 12, ...)
+  } else {
+    energyGrouped <- totalEnergyConsumByMonth(energyData)
+    time_series <- ts(energyGrouped$Total_energy_month, frequency = 12, ...)
+  }
+  
+  time_series
+}
+
+splitTrainTestTimeSeries <- function(time_series, start_train, end_train, start_test, end_test) {
+  train <- window(time_series, start = start_train, end = end_train)
+  test <- window(time_series, start = start_test, end = end_test)
+  
+  split <- list(train = train, test = test)
+  
+  split
 }
