@@ -3,7 +3,7 @@ pacman::p_load(RMySQL, dplyr, chron, lubridate, ggfortify, padr, forecast, tseri
 source("scripts/utils.R")
 source("scripts/plots.R")
 
-
+options(warn=-1)
 if (!exists("energy_data") || is.null(energy_data)) {
   cat("Energy data not in memory. Trying to obtain it from the data base.\n")
   conn <- dbConnect(MySQL(), 
@@ -61,10 +61,16 @@ if (user_input_granularity == 1) {
 }
 
 time_series <- NULL
+y_label_ts <- NULL
+title_ts <- NULL
 if (user_input_analysis == 1) {
   time_series <- totalEnergyConsumTimeSeries(energy_data, granularity, start = start_ts)  
+  y_label_ts <- "Energy (kWh)"
+  title_ts <- "Energy Comsumption Time Series"
 } else if (user_input_analysis == 2) {
   time_series <- totalCostTimeSeries(energy_data, granularity, start = start_ts)
+  y_label_ts <- "Euros"
+  title_ts <- "Energy Cost Time Series"
 } else {
   
 }
@@ -95,4 +101,11 @@ forecast_arima <- forecast:::forecast.Arima(model_arima, h = forecast_length)
 model_hw <- HoltWinters(time_series_split$train)
 forecast_hw <- forecast:::forecast.HoltWinters(model_hw, h = forecast_length)
 
-print(autoplot(time_series) + autolayer(forecast_arima$mean) + autolayer(forecast_hw$mean))
+print(autoplot(time_series, size = 1.3, main = title_ts) + 
+        autolayer(forecast_arima$mean, size = 1.3, series = "ARIMA") + 
+        autolayer(forecast_hw$mean, size = 1.3, series = "Holt Winters") +
+        ylab(y_label_ts) + xlab("Year") +
+        guides(colour = guide_legend(title = "Forecast Algorithm"))
+      )
+  
+options(warn=0)
