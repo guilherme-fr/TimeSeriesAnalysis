@@ -33,7 +33,7 @@ cat(" (1) Energy\n (2) Cost")
 user_input_analysis <- readline()
 user_input_analysis <- as.integer(user_input_analysis)
 
-cat("Choose the granularity of the data by typing its number option: \n")
+cat("Do you want to forecast your data by: \n")
 cat(" (1) Days\n (2) Weeks\n (3) Months\n")
 user_input_granularity <- readline()
 user_input_granularity <- as.integer(user_input_granularity)
@@ -74,27 +74,6 @@ time_series_relative_variance <- apply(time_series_dec$time.series, 2, var) / va
 
 autoplot(time_series_dec) #Shows graphs of the time series and its components
 ggtsdisplay(time_series)  #Shows the time series and its ACF and PACF graphs
-cat("\nRelative variance of the time series components: \n")
-print(time_series_relative_variance)
-
-adf_test <- adf.test(time_series)
-cat("\nADF Test: \n")
-print(adf_test)
-
-cat("\n#####################################################\n")
-
-cat("\nDo you want to make any transformation in the data?\n")
-cat(" (1) YES\n (2) NO\n")
-user_input_do_transform <- readline()
-user_input_do_transform <- as.integer(user_input_do_transform)
-
-if (user_input_do_transform == 1) {
-  #TODO Show possible transformations
-} else if (user_input_do_transform == 2) {
-  #TODO Move on with the execution flow
-} else {
-  #TODO Invalid option. Should throw an error message and show the options again
-}
 
 time_series_split <- splitTrainTestTimeSeries(time_series, 
                                               start_train = start_train, 
@@ -102,51 +81,18 @@ time_series_split <- splitTrainTestTimeSeries(time_series,
                                               start_test = start_test, 
                                               end_test = end_test)
 
-cat("\nChoose the forecast algorithm: \n")
-cat(" (1) ARIMA\n (2) Holt Winters\n")
-user_input_algorithm <- readline()
-user_input_algorithm <- as.integer(user_input_algorithm)
+cat(paste("\nHow many ", granularity, "s do you want to forecast?\n", sep = ""))
+user_input_forecast_length <- readline()
+user_input_forecast_length <- as.numeric(user_input_forecast_length)
 
 model <- NULL
 forecast <- NULL
-forecast_length = length(time_series_split$test) + 2
-if (user_input_algorithm == 1) {
-  #TODO Show ARIMA options
-  cat("\nSelect the type of ARIMA: \n")
-  cat(" (1) Auto Arima\n (2) Non seasonal ARIMA\n (3) Seasonal ARIMA\n")
-  user_input_arima_type <- readline()
-  user_input_arima_type <- as.integer(user_input_arima_type)
-  
-  if (user_input_arima_type == 1) {
-    #TODO Run auto arima
-    model <- auto.arima(time_series_split$train)
-    forecast <- forecast:::forecast.Arima(model, h = forecast_length)
-  } else if (user_input_arima_type == 2) {
-    #TODO Show Non seasonal ARIMA options
-    
-  } else if (user_input_arima_type == 3) {
-    #TODO Show seasonal ARIMA options
-    
-  } else {
-    #TODO Invalid option. Should throw an error message and show the options again
-  }
-  
-} else if (user_input_algorithm == 2) {
-  #TODO Run Holt Winters
-  model <- HoltWinters(time_series_split$train)
-  forecast <- forecast:::forecast.HoltWinters(model, h = forecast_length)
-} else {
-  #TODO Invalid option. Should throw an error message and show the options again
-}
+forecast_length = length(time_series_split$test) + user_input_forecast_length
 
-cat("\nModel Metrics:\n")
-print(model)
+model_arima <- auto.arima(time_series_split$train)
+forecast_arima <- forecast:::forecast.Arima(model_arima, h = forecast_length)
 
-model_accuracy <- accuracy(forecast, time_series_split$test)
-cat("\nModel accuracy: \n")
-print(model_accuracy)
+model_hw <- HoltWinters(time_series_split$train)
+forecast_hw <- forecast:::forecast.HoltWinters(model_hw, h = forecast_length)
 
-cat("\nCheck Residuals: \n")
-checkresiduals(forecast)
-
-print(autoplot(time_series) + autolayer(forecast$mean))
+print(autoplot(time_series) + autolayer(forecast_arima$mean) + autolayer(forecast_hw$mean))
