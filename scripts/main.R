@@ -136,7 +136,7 @@ if (user_input_do_transform == 1) {
     } else if (user_input_transformation == 2) {
       data_transformed <- diff(data_transformed, lag = frequency)
     } else if (user_input_transformation == 3) {
-      
+      data_transformed <- log(data_transformed)
     } else {
       
     }
