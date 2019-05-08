@@ -83,39 +83,16 @@ featureEngineering <- function(energyData) {
   energyData
 }
 
-totalEnergyConsumTimeSeries <- function(energyData, granularity = "month", ...) {
+toTimeSeries <- function(data, granularity = "month", ...) {
   time_series <- NULL
   if (tolower(granularity) == "day") {
-    energyGrouped <- totalEnergyConsumByDay(energyData)
-    time_series <- ts(energyGrouped$Total_energy_day, frequency = 365, ...)
+    time_series <- ts(data, frequency = 365, ...)
   } else if (tolower(granularity) == "week") {
-    energyGrouped <- totalEnergyConsumByWeek(energyData)
-    time_series <- ts(energyGrouped$Total_energy_week, frequency = 52, ...)
+    time_series <- ts(data, frequency = 52, ...)
   } else if (tolower(granularity) == "month") {
-    energyGrouped <- totalEnergyConsumByMonth(energyData)
-    time_series <- ts(energyGrouped$Total_energy_month, frequency = 12, ...)
+    time_series <- ts(data, frequency = 12, ...)
   } else {
-    energyGrouped <- totalEnergyConsumByMonth(energyData)
-    time_series <- ts(energyGrouped$Total_energy_month, frequency = 12, ...)
-  }
-  
-  time_series
-}
-
-totalCostTimeSeries <- function(energyData, granularity = "month", ...) {
-  time_series <- NULL
-  if (tolower(granularity) == "day") {
-    costGrouped <- totalCostByDay(energyData)
-    time_series <- ts(costGrouped$Total_cost_day, frequency = 365, ...)
-  } else if (tolower(granularity) == "week") {
-    costGrouped <- totalCostByWeek(energyData)
-    time_series <- ts(costGrouped$Total_cost_week, frequency = 52, ...)
-  } else if (tolower(granularity) == "month") {
-    costGrouped <- totalCostByMonth(energyData)
-    time_series <- ts(costGrouped$Total_cost_month, frequency = 12, ...)
-  } else {
-    costGrouped <- totalCostByMonth(energyData)
-    time_series <- ts(costGrouped$Total_cost_month, frequency = 12, ...)
+    time_series <- ts(data, frequency = 12, ...)
   }
   
   time_series
