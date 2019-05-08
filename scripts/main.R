@@ -66,7 +66,7 @@ title_ts <- NULL
 if (user_input_analysis == 1) {
   time_series <- totalEnergyConsumTimeSeries(energy_data, granularity, start = start_ts)  
   y_label_ts <- "Energy (kWh)"
-  title_ts <- "Energy Comsumption Time Series"
+  title_ts <- "Energy Consumption Time Series"
 } else if (user_input_analysis == 2) {
   time_series <- totalCostTimeSeries(energy_data, granularity, start = start_ts)
   y_label_ts <- "Euros"
@@ -101,11 +101,13 @@ forecast_arima <- forecast:::forecast.Arima(model_arima, h = forecast_length)
 model_hw <- HoltWinters(time_series_split$train)
 forecast_hw <- forecast:::forecast.HoltWinters(model_hw, h = forecast_length)
 
-print(autoplot(time_series, size = 1.3, main = title_ts) + 
-        autolayer(forecast_arima$mean, size = 1.3, series = "ARIMA") + 
-        autolayer(forecast_hw$mean, size = 1.3, series = "Holt Winters") +
+line_width = 1.3
+print(autoplot(time_series, size = line_width, main = title_ts) + 
+        autolayer(forecast_arima$mean, size = line_width, series = "ARIMA") + 
+        autolayer(forecast_hw$mean, size = line_width, series = "Holt Winters") +
         ylab(y_label_ts) + xlab("Year") +
-        guides(colour = guide_legend(title = "Forecast Algorithm"))
+        guides(colour = guide_legend(title = "Forecast Algorithm")) +
+        theme(text = element_text(size = 15))
       )
   
 options(warn=0)
