@@ -1,5 +1,5 @@
 
-pacman::p_load(RMySQL, dplyr, chron, lubridate, ggplot2, ggfortify, padr, forecast, tseries)
+pacman::p_load(RMySQL, dplyr, chron, lubridate, ggfortify, padr, forecast, tseries)
 source("scripts/utils.R")
 source("scripts/plots.R")
 
@@ -28,6 +28,11 @@ if (!exists("energy_data") || is.null(energy_data)) {
   partial_data <- NULL #Memory cleaning
 }
 
+cat("What do you want to analyze?\n")
+cat(" (1) Energy\n (2) Cost")
+user_input_analysis <- readline()
+user_input_analysis <- as.integer(user_input_analysis)
+
 cat("Choose the granularity of the data by typing its number option: \n")
 cat(" (1) Days\n (2) Weeks\n (3) Months\n")
 user_input_granularity <- readline()
@@ -55,8 +60,15 @@ if (user_input_granularity == 1) {
   #TODO Invalid option. Should throw an error message and show the options again
 }
 
+time_series <- NULL
+if (user_input_analysis == 1) {
+  time_series <- totalEnergyConsumTimeSeries(energy_data, granularity, start = start_ts)  
+} else if (user_input_analysis == 2) {
+  time_series <- totalCostTimeSeries(energy_data, granularity, start = start_ts)
+} else {
+  
+}
 
-time_series <- totalEnergyConsumTimeSeries(energy_data, granularity, start = start_ts)
 time_series_dec <- stl(time_series, s.window = "periodic")
 time_series_relative_variance <- apply(time_series_dec$time.series, 2, var) / var(time_series)
 
@@ -97,6 +109,7 @@ user_input_algorithm <- as.integer(user_input_algorithm)
 
 model <- NULL
 forecast <- NULL
+forecast_length = length(time_series_split$test) + 2
 if (user_input_algorithm == 1) {
   #TODO Show ARIMA options
   cat("\nSelect the type of ARIMA: \n")
@@ -107,7 +120,7 @@ if (user_input_algorithm == 1) {
   if (user_input_arima_type == 1) {
     #TODO Run auto arima
     model <- auto.arima(time_series_split$train)
-    forecast <- forecast:::forecast.Arima(model, h = length(time_series_split$test))
+    forecast <- forecast:::forecast.Arima(model, h = forecast_length)
   } else if (user_input_arima_type == 2) {
     #TODO Show Non seasonal ARIMA options
     
@@ -121,10 +134,13 @@ if (user_input_algorithm == 1) {
 } else if (user_input_algorithm == 2) {
   #TODO Run Holt Winters
   model <- HoltWinters(time_series_split$train)
-  forecast <- forecast:::forecast.HoltWinters(model, h = length(time_series_split$test))
+  forecast <- forecast:::forecast.HoltWinters(model, h = forecast_length)
 } else {
   #TODO Invalid option. Should throw an error message and show the options again
 }
+
+cat("\nModel Metrics:\n")
+print(model)
 
 model_accuracy <- accuracy(forecast, time_series_split$test)
 cat("\nModel accuracy: \n")
@@ -134,6 +150,3 @@ cat("\nCheck Residuals: \n")
 checkresiduals(forecast)
 
 print(autoplot(time_series) + autolayer(forecast$mean))
-
-
-

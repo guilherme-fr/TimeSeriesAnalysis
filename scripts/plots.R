@@ -105,3 +105,30 @@ totalEnergyConsumByMonth <- function(energyData) {
   
   result
 }
+
+totalCostByDay <- function(energyData) {
+  result <- energyData %>%
+    mutate(Year = year(Date), Day = day(Date)) %>%
+    group_by(Year, Month, Day) %>%
+    summarise(Total_cost_day = sum(Cost, na.rm = TRUE))
+  
+  result
+}
+
+totalCostByWeek <- function(energyData) {
+  result <- energyData %>%
+    mutate(Year = year(Date), Week = week(Date)) %>%
+    group_by(Year, Week) %>%
+    summarise(Total_cost_week = sum(Cost, na.rm = TRUE))
+  
+  result
+}
+
+totalCostByMonth <- function(energyData) {
+  result <- energyData %>%
+    mutate(Year = year(Date)) %>%
+    group_by(Year, Month) %>%
+    summarise(Total_cost_month = sum(Cost, na.rm = TRUE))
+  
+  result
+}

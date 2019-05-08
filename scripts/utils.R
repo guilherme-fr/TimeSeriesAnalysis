@@ -28,7 +28,7 @@ featureEngineering <- function(energyData) {
                                                 format = "%Y-%m-%d %H:%M:%S", 
                                               tz = "Europe/Paris"))
   #Filling the missing minutes of the dataset
-  energyData <- pad(energyData, by = "Date_time", break_above = 2)
+  energyData <- pad(energyData, by = "Date_time", break_above = 3)
   
   #Changing Date and Time to appropriate data type
   energyData <- mutate(energyData, 
@@ -49,6 +49,8 @@ featureEngineering <- function(energyData) {
   #Storing the hours to make it easyer to split into period of the day in code below
   hours <- chron::hours(energyData$Time)
   
+  mean_global_active_power <- mean(energyData$Global_active_power, na.rm = TRUE)
+  
   energyData <- energyData %>% 
     
     #New columns for Month, Week day and Season
@@ -56,17 +58,24 @@ featureEngineering <- function(energyData) {
            Week_day = weekdays(Date), 
            Season = as.factor(getSeason(Date))) %>%
     
-    #Nem column for period of the day
+    #New column for period of the day
     mutate(Period_of_day = ifelse(hours >= 0 & hours < 6, "Dawn", 
                                   ifelse(hours >= 6 & hours < 12, "Morning", 
                                          ifelse(hours >= 12 & hours < 18, "Afternoon", "Night")))) %>%
     
-    #Nem column for energy consumption (kWh)
+    #Filling the missing values of Global_active_power with the mean
+    mutate(Global_active_power = ifelse(is.na(Global_active_power), 
+                                  mean_global_active_power, Global_active_power)) %>%
+    
+    #New column for energy consumption (kWh)
     mutate(Global_energy = Global_active_power * (1/60)) %>%
     
     #New column for energy consumption not measured by any sub-meterings (Wh)
     mutate(Reminder_energy = 
              Global_active_power * 1000/60 - Sub_metering_1 - Sub_metering_2 - Sub_metering_3) %>%
+    
+    #New column with the average cost
+    mutate(Cost = Global_energy * 0.1754) %>%
     
     #Ordering by Date and time
     arrange(Date, Time)
@@ -88,6 +97,25 @@ totalEnergyConsumTimeSeries <- function(energyData, granularity = "month", ...) 
   } else {
     energyGrouped <- totalEnergyConsumByMonth(energyData)
     time_series <- ts(energyGrouped$Total_energy_month, frequency = 12, ...)
+  }
+  
+  time_series
+}
+
+totalCostTimeSeries <- function(energyData, granularity = "month", ...) {
+  time_series <- NULL
+  if (tolower(granularity) == "day") {
+    costGrouped <- totalCostByDay(energyData)
+    time_series <- ts(costGrouped$Total_cost_day, frequency = 365, ...)
+  } else if (tolower(granularity) == "week") {
+    costGrouped <- totalCostByWeek(energyData)
+    time_series <- ts(costGrouped$Total_cost_week, frequency = 52, ...)
+  } else if (tolower(granularity) == "month") {
+    costGrouped <- totalCostByMonth(energyData)
+    time_series <- ts(costGrouped$Total_cost_month, frequency = 12, ...)
+  } else {
+    costGrouped <- totalCostByMonth(energyData)
+    time_series <- ts(costGrouped$Total_cost_month, frequency = 12, ...)
   }
   
   time_series
