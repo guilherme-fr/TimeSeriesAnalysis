@@ -9,7 +9,7 @@ if (!exists("energy_data") || is.null(energy_data)) {
   conn <- dbConnect(MySQL(), 
                     user = "deepAnalytics",
                     password = "Sqltask1234!",
-                    dbname = "dataanalytics2018",
+                    dbname = "dataanalytics20118",
                     host = "data-analytics-2018.cbrosir2cswx.us-east-1.rds.amazonaws.com")
   
   dataBaseNames <- c("yr_2007", "yr_2008", "yr_2009", "yr_2010")
@@ -104,7 +104,7 @@ time_series <- toTimeSeries(data_time_series, granularity, start = start_ts)
 time_series_dec <- stl(time_series, s.window = "periodic")
 time_series_relative_variance <- apply(time_series_dec$time.series, 2, var) / var(time_series)
 
-autoplot(time_series_dec) #Shows graphs of the time series and its components
+print(autoplot(time_series_dec)) #Shows graphs of the time series and its components
 ggtsdisplay(time_series)  #Shows the time series and its ACF and PACF graphs
 cat("\nRelative variance of the time series components: \n")
 print(time_series_relative_variance)
@@ -120,9 +120,9 @@ cat(" (1) YES\n (2) NO\n")
 user_input_do_transform <- readline()
 user_input_do_transform <- as.integer(user_input_do_transform)
 
-did_transformaction <- FALSE
+did_transformation <- FALSE
 if (user_input_do_transform == 1) {
-  did_transformaction <- TRUE
+  did_transformation <- TRUE
   data_transformed <- data_time_series
   while (user_input_do_transform == 1) {
     #TODO Show possible transformations
@@ -138,7 +138,7 @@ if (user_input_do_transform == 1) {
     } else if (user_input_transformation == 3) {
       data_transformed <- log(data_transformed)
     } else {
-      
+      #TODO Invalid option. Should throw an error message and show the options again
     }
     
     time_series <- toTimeSeries(data_transformed, granularity, start = start_ts)
@@ -169,7 +169,7 @@ if (user_input_do_transform == 1) {
   #TODO Invalid option. Should throw an error message and show the options again
 }
 
-if (did_transformaction) {
+if (did_transformation) {
   cat("\nDo you want to keep the transformations in the data?\n")
   cat(" (1) YES\n (2) NO\n")
   user_input_keep_transf <- readline()
@@ -207,10 +207,36 @@ if (user_input_algorithm == 1) {
     forecast <- forecast:::forecast.Arima(model, h = forecast_length)
   } else if (user_input_arima_type == 2) {
     #TODO Show Non seasonal ARIMA options
+    cat("\nType the non seasonal parameters p, d , q: (Separated by commas)\n")
+    user_input_arima_param1 <- readline()
+    arima_params1 <- strsplit(user_input_arima_param1, ",")
+    arima_p <- as.integer(arima_params1[[1]][1])
+    arima_d <- as.integer(arima_params1[[1]][2])
+    arima_q <- as.integer(arima_params1[[1]][3])
     
+    model <- Arima(time_series_split$train, order = c(arima_p, arima_d, arima_q))
+    forecast <- forecast:::forecast.Arima(model, h = forecast_length)
   } else if (user_input_arima_type == 3) {
     #TODO Show seasonal ARIMA options
+    cat("\nType the non seasonal parameters p, d , q: (Separated by commas)\n")
+    user_input_arima_param1 <- readline()
+    arima_params1 <- strsplit(user_input_arima_param1, ",")
+    arima_p <- as.integer(arima_params1[[1]][1])
+    arima_d <- as.integer(arima_params1[[1]][2])
+    arima_q <- as.integer(arima_params1[[1]][3])
     
+    cat("\nType the seasonal parameters P, D, Q: (Separated by commas)\n")
+    user_input_arima_param2 <- readline()
+    arima_params2 <- strsplit(user_input_arima_param2, ",")
+    arima_P <- as.integer(arima_params2[[1]][1])
+    arima_D <- as.integer(arima_params2[[1]][2])
+    arima_Q <- as.integer(arima_params2[[1]][3])
+    
+    model <- forecast::Arima(time_series_split$train, 
+                   order = c(arima_p, arima_d, arima_q),
+                   seasonal = c(arima_P, arima_D, arima_Q),
+                   lambda = 0)
+    forecast <- forecast:::forecast.Arima(model, h = forecast_length)
   } else {
     #TODO Invalid option. Should throw an error message and show the options again
   }
