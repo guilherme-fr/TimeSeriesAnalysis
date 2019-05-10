@@ -49,8 +49,6 @@ featureEngineering <- function(energyData) {
   #Storing the hours to make it easyer to split into period of the day in code below
   hours <- chron::hours(energyData$Time)
   
-  mean_global_active_power <- mean(energyData$Global_active_power, na.rm = TRUE)
-  
   energyData <- energyData %>% 
     
     #New columns for Month, Week day and Season
@@ -63,9 +61,14 @@ featureEngineering <- function(energyData) {
                                   ifelse(hours >= 6 & hours < 12, "Morning", 
                                          ifelse(hours >= 12 & hours < 18, "Afternoon", "Night")))) %>%
     
-    #Filling the missing values of Global_active_power with the mean
+    #New column with the mean global power grouped by months
+    group_by(Month) %>%
+    mutate(mean_p = mean(Global_active_power, na.rm = TRUE)) %>%
+    ungroup() %>%
+    
+    #Filling the missing values of Global_active_power with the mean for each month
     mutate(Global_active_power = ifelse(is.na(Global_active_power), 
-                                  mean_global_active_power, Global_active_power)) %>%
+                                  mean_p, Global_active_power)) %>%
     
     #New column for energy consumption (kWh)
     mutate(Global_energy = Global_active_power * (1/60)) %>%

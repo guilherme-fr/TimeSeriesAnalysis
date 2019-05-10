@@ -3,6 +3,35 @@ pacman::p_load(RMySQL, dplyr, chron, lubridate, ggfortify, padr, forecast, tseri
 source("scripts/utils.R")
 source("scripts/data_handler.R")
 
+
+get_user_option <- function(question_str, question_options) {
+  options_str <- ""
+  #Loop for build the answer options
+  for (i in 1:length(question_options)) {
+    options_str <- paste(options_str, " (", i, ") ", question_options[i], " \n", sep = "")
+  }
+  
+  cat(paste("\n", question_str, "\n", options_str, sep = ""))
+  user_input <- readline()
+  user_input <- as.integer(user_input)
+  
+  answer <- NULL
+  if (user_input %in% 1:length(question_options)) {
+    answer <- question_options[user_input]
+  } else {
+    answer <- "-INVALID-"
+  }
+  
+  answer
+}
+
+get_user_input <- function(question_str) {
+  cat(paste("\n", question_str, "\n", sep = ""))
+  user_input <- readline()
+  
+  user_input
+}
+
 question_analysis <- "What do you want to analyze?"
 options_analysis <- c("Energy", "Cost")
 
@@ -293,33 +322,4 @@ print(autoplot(time_series, size = line_width, main = title_ts) +
         guides(colour = guide_legend(title = "")) +
         theme(text = element_text(size = 15))
 )
-
-
-get_user_option <- function(question_str, question_options) {
-  options_str <- ""
-  #Loop for build the answer options
-  for (i in 1:length(question_options)) {
-    options_str <- paste(options_str, " (", i, ") ", question_options[i], " \n", sep = "")
-  }
-  
-  cat(paste("\n", question_str, "\n", options_str, sep = ""))
-  user_input <- readline()
-  user_input <- as.integer(user_input)
-  
-  answer <- NULL
-  if (user_input %in% 1:length(question_options)) {
-    answer <- question_options[user_input]
-  } else {
-    answer <- "-INVALID-"
-  }
-  
-  answer
-}
-
-get_user_input <- function(question_str) {
-  cat(paste("\n", question_str, "\n", sep = ""))
-  user_input <- readline()
-  
-  user_input
-}
 
